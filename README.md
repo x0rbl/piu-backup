@@ -1,6 +1,6 @@
 # Overview
 
-This is a very simple tool that allows players to save their scores on [url=https://www.piugame.com/]Pump It Up Phoenix[/url] to a sqlite3 database.
+This is a very simple tool that allows players to save their scores on [https://www.piugame.com/](Pump It Up Phoenix) to a sqlite3 database.
 
 # Setup
 
@@ -14,7 +14,7 @@ python3 -m pip install beautifulsoup4 pytz requests
 
 For the time being, you'll need to manually retrieve your session cookie in order to perform the requests. Instructions:
 
-* [https://www.piugame.com/login.php]Login to the website[/url] by entering your username and password
+* [https://www.piugame.com/login.php](Login to the website) by entering your username and password
 * Upon successful login, open a Javascript console and enter `document.cookie`
   * Chrome users on Windows can access the console by typing Ctrl+Shift+I and clicking the 'Console' tab
 * Save the entire result of `document.cookie` (single quotes included) to a file named `cookie.txt` in the same directory as `getplays.py`
@@ -32,6 +32,6 @@ If there are no errors, this should create a file named `plays.db`, which contai
 
 After you've played some more, you can run the tool again to add more play entries to the same database. It won't save the same play twice.
 
-You can view the database using a graphical tool like [url=https://sqlitebrowser.org/dl/]DB Browser[/url].
+You can view the database using a graphical tool like [https://sqlitebrowser.org/dl/](DB Browser).
 
 Since this tool has only been tested very lightly, I recommend saving a backup of your database before updating it.
