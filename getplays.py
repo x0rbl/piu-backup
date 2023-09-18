@@ -94,11 +94,17 @@ def parse_page(html, debug=True):
   ul = soup.find('ul', re.compile('.*recently_playeList.*'))
   if ul == None:
     raise Exception('Play list not found on fetched page (are you logging in correctly?)')
+
+  # For each score on the page...
   plays = []
   for li in ul.findChildren('li', recursive=False):
     if debug: print('*Score Element*')
+ 
+   # Song name
     name = li.find('div', re.compile('.*song_name.*')).text
     if debug: print('  name = '+name)
+
+    # Mode
     mode_img = li.find('div', 'tw').find('img')['src']
     mode = '?'
     if mode_img.endswith('d_text.png'):
@@ -110,6 +116,8 @@ def parse_page(html, debug=True):
     if mode == '?':
       raise Exception('Unexpected mode image src: '+mode_img)
     if debug: print('  mode = '+mode)
+
+    # Difficulty
     diff_div = li.find('div', re.compile('.*numw.*'))
     diff = ''
     for img in diff_div.find_all('img'):
@@ -119,26 +127,50 @@ def parse_page(html, debug=True):
         raise Exception('Unexpected difficulty image src: '+diff_img)
       diff += x.group(1)
     if debug: print('  diff = '+diff)
+
+    # Stage Break, Score, Grade, Passed, Plate
     grade_div = li.find('div', 'li_in ac')
-    score = grade_div.text.replace(',','').strip()
-    if debug: print('  score = '+score)
-    grade_img = grade_div.find('img')['src']
-    x = re.match(r'.*/grade/(x_)?(?:([a-z]+)(_p)?)\.png', grade_img)
-    if x == None:
-      raise Exception('Unexpected grade image src: '+grade_img)
-    passed = (x.group(1) == None)
-    print('  passed: '+str(passed))
-    grade = x.group(2).upper()
-    if x.group(3) == '_p':
-      grade += '+'
-    if debug: print('  grade = '+grade)
-    plate = ''
-    plate_div = li.find('div', 'li_in st1')
-    if plate_div:
-      plate_img = plate_div.find('img')['src']
-      x = re.match(r'.*/plate/(\w+)\.png', plate_img)
-      plate = x.group(1).upper()
-    if debug: print('  plate = '+plate)
+    score_text = grade_div.text.strip()
+    stage_break = (score_text == "STAGE BREAK")
+    if debug: print('  stage_break = '+str(stage_break))
+    if not stage_break:
+      # Score
+      score = score_text.replace(',','')
+      if int(score) < 0 or int(score) > 1000000:
+        raise Exception('Unexpected score: '+score)
+      if debug: print('  score = '+score)
+
+      # Grade, Passed
+      grade_img = grade_div.find('img')['src']
+      x = re.match(r'.*/grade/(x_)?(?:([a-z]+)(_p)?)\.png', grade_img)
+      if x == None:
+        raise Exception('Unexpected grade image src: '+grade_img)
+      passed = (x.group(1) == None)
+      if debug: print('  passed: '+str(passed))
+      grade = x.group(2).upper()
+      if x.group(3) == '_p':
+        grade += '+'
+      if grade not in ('SSS+', 'SSS', 'SS+', 'SS', 'S+', 'S', 'AAA+', 'AAA', 'AA+', 'AA', 'A+', 'A', 'B', 'C', 'D', 'F'):
+        raise Exception('Unexpected grade: '+grade)
+      if debug: print('  grade = '+grade)
+
+      # Plate
+      plate = ''
+      plate_div = li.find('div', 'li_in st1')
+      if plate_div:
+        plate_img = plate_div.find('img')['src']
+        x = re.match(r'.*/plate/(\w+)\.png', plate_img)
+        plate = x.group(1).upper()
+      if plate not in ('PG', 'UG', 'EG', 'SG', 'MG', 'TG', 'FG', 'RG', ''):
+        raise Exception('Unexpected plate: '+plate)
+      if debug: print('  plate = '+plate)
+    else: # Stage break
+      score = 0
+      grade = ''  # <- A grade of '' indicates stage break
+      passed = False
+      plate = ''
+
+    # Judgment Counts
     tbody = li.find('tbody')
     counts = []
     for td in tbody.find_all('td'):
@@ -146,9 +178,12 @@ def parse_page(html, debug=True):
     if len(counts) != 5:
       raise Exception('Unexpected judgment counts: '+str(counts))
     if debug: print('  counts = '+' / '.join(counts))
+
+    # Date
     date_text = li.find('p', 'recently_date_tt').text.strip().replace('GMT+9', 'GMT+0900') # lazy
     date = datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S (%Z%z)')
     if debug: print('  date = %s (%d)' % (str(date.astimezone()), epoch(date)))
+
     play = Play(name, mode, int(diff), int(score), grade, passed, plate, counts, date)
     plays.append(play)
   return plays
@@ -175,6 +210,8 @@ def full_update(db_path):
 
 if __name__ == '__main__':
   full_update('plays.db')
+  #html = fetch_page_fake()
+  #plays = parse_page(html)
 
 # TODO: Option to fetch the cookie automatically given a hardcoded username/password
 

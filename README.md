@@ -35,3 +35,46 @@ After you've played some more, you can run the tool again to add more play entri
 You can view the database using a graphical tool like [DB Browser](https://sqlitebrowser.org/dl/).
 
 Since this tool has only been tested very lightly, I recommend saving a backup of your database before updating it.
+
+# Interpreting the database
+
+The database stores a row for each play. The columsn in the table are:
+
+* `uniq TEXT`
+  * A unique identifier for the chart, for convenience
+  * (It combines `name`, `mode`, and `diff`)
+* `name TEXT`
+  * The name of the song
+* `mode TEXT`
+  * `S` for single, `D` for double, `C` for co-op
+* `diff INT`
+  * The difficulty of the chart (1-28)
+* `score INT`
+  * The player's score
+  * Set to `0` if the song were prematurely exited due to 51 consecutive misses or Stage Break On
+* `grade TEXT`
+  * The player's grade
+  * Grades include: `SSS+`, `SSS`, `SS+`, `SS`, `S+`, `S`, `AAA+`, `AAA`, `AA+`, `AA`, `A+`, `A`, `B`, `C`, `D`, `F`
+  * Set to the empty string if the song were prematurely exited due to 51 consecutive misses or Stage Break On
+* `passed INT`
+  * `1` if the player passed, `0` if the player failed
+  * Set to `0` if the song were prematurely exited due to 51 consecutive misses or Stage Break On
+* `plate TEXT`
+  * The plate awarded to the player, or the empty string if the song were not passed
+  * Plates include: `PG`, `UG`, `EG`, `SG`, `MG`, `TG`, `FG`, `RG`
+  * Set to the empty string if the song were prematurely exited due to 51 consecutive misses or Stage Break On
+* `perfs INT`
+  * The number of Perfect judgments
+* `greats INT`
+  * The number of Great judgments
+* `goods INT`
+  * The number of Gerfect judgments
+* `bads INT`
+  * The number of Bad judgments
+* `misses INT`
+  * The number of Miss judgments
+* `date INT`
+  * The date, represented as a Unix timestamp (seconds since the epoch)
+* `date_pretty TEXT`
+  * The date, formatted as a human-readable string in the local timezone, for convenience
+  * Example format: `2023-12-31 23:59:59-05:00`
