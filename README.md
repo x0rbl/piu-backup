@@ -46,9 +46,11 @@ The database stores a row for each play. The columsn in the table are:
 * `name TEXT`
   * The name of the song
 * `mode TEXT`
-  * `S` for single, `D` for double, `C` for co-op
+  * `S` for single, `D` for double, `C` for co-op, `US` for UCS single, `UD` for UCS double
 * `diff INT`
-  * The difficulty of the chart (1-28)
+  * For single and double, this is the difficulty of the chart (1-28)
+  * For co-op, this is the number of players (2-5)
+  * Set to `0` for UCS charts, as they do not have an accessible difficulty
 * `score INT`
   * The player's score
   * Set to `0` if the song were prematurely exited due to 51 consecutive misses or Stage Break On

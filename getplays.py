@@ -47,9 +47,13 @@ def play_already_saved(db, play):
   return not (data is None)
 
 def save_play(db, play):
+  if play.mode[0] == 'U':
+    uniq = '%s %s' % (play.name, play.mode)
+  else:
+    uniq = '%s %s%d' % (play.name, play.mode, play.diff)
   cur = db.cursor()
   cur.execute('INSERT INTO plays(uniq, name, mode, diff, score, grade, passed, plate, perfs, greats, goods, bads, misses, date, date_pretty) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', (
-    '%s %s%d' % (play.name, play.mode, play.diff),
+    uniq,
     play.name,
     play.mode,
     play.diff,
@@ -106,27 +110,39 @@ def parse_page(html, debug=True):
 
     # Mode
     mode_img = li.find('div', 'tw').find('img')['src']
-    mode = '?'
     if mode_img.endswith('d_text.png'):
       mode = 'D'
-    if mode_img.endswith('s_text.png'):
+    elif mode_img.endswith('s_text.png'):
       mode = 'S'
-    if mode_img.endswith('c_text.png'):
+    elif mode_img.endswith('c_text.png'):
       mode = 'C'
-    if mode == '?':
+    elif mode_img.endswith('u_text.png'):
+      bg_style = li.find('div', re.compile('.*cont.*'))['style']
+      if '/s_bg.png' in bg_style:
+        mode = 'US'
+      elif '/d_bg.png' in bg_style:
+        mode = 'UD'
+      else:
+        raise Exception('Unexpected UCS style: '+bg_style)
+    else:
       raise Exception('Unexpected mode image src: '+mode_img)
     if debug: print('  mode = '+mode)
 
     # Difficulty
-    diff_div = li.find('div', re.compile('.*numw.*'))
-    diff = ''
-    for img in diff_div.find_all('img'):
-      diff_img = img['src']
-      x = re.match(r'.*/[dsc]_num_(\d)\.png$', diff_img)
-      if x == None:
-        raise Exception('Unexpected difficulty image src: '+diff_img)
-      diff += x.group(1)
-    if debug: print('  diff = '+diff)
+    diff_num = 0
+    if mode[0] != 'U':
+      diff_div = li.find('div', re.compile('.*numw.*'))
+      diff = ''
+      for img in diff_div.find_all('img'):
+        diff_img = img['src']
+        if diff_img.endswith('/c_icon.png'): continue
+        if diff_img.endswith('/u_num_x.png'): continue
+        x = re.match(r'.*/[dsc]_num_(\d)\.png$', diff_img)
+        if x == None:
+          raise Exception('Unexpected difficulty image src: '+diff_img)
+        diff += x.group(1)
+      if debug: print('  diff = '+diff)
+      diff_num = int(diff)
 
     # Stage Break, Score, Grade, Passed, Plate
     grade_div = li.find('div', 'li_in ac')
@@ -184,7 +200,7 @@ def parse_page(html, debug=True):
     date = datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S (%Z%z)')
     if debug: print('  date = %s (%d)' % (str(date.astimezone()), epoch(date)))
 
-    play = Play(name, mode, int(diff), int(score), grade, passed, plate, counts, date)
+    play = Play(name, mode, diff_num, int(score), grade, passed, plate, counts, date)
     plays.append(play)
   return plays
 
